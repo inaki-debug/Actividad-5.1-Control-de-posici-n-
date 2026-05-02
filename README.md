@@ -21,4 +21,34 @@ Para mejorar los resultados y no depender de sintonizar las ganancias por cada e
    - `alpha` que es el factor que determina qué tan rápido decae la ganancia de la máxima a la mínima
 2. Dentro del bucle, después de calcular la magnitud del error de posición, se implementó una función exponencial que evalúa la ganancia en tiempo real: `k_adapt = K_min + (K_max - K_min) * (1 - exp(-alpha * Error(k)));`. Esto hace que cuando el error es grande, el término exponencial tiende a 0, haciendo que `k_adapt` se acerque a `k_max` y si es casi 0, se acerca más a `k_min`.
 3. La matriz de ganancias de la estrategia anterior deja de ser constante y se reescribe en cada iteración utilizando el valor de `k_adapt`. 
-4. El resto del proceso es igual, sin embargo, el comportamiento es distinto debido a que se puede observar como la aceleración inicial es rápida y una desaceleración suave cuando se acerca al objetivo, eliminando los movimientos bruscos y optimizando el tiempo de llegada. 
+4. El resto del proceso es igual, sin embargo, el comportamiento es distinto debido a que se puede observar como la aceleración inicial es rápida y una desaceleración suave cuando se acerca al objetivo, eliminando los movimientos bruscos y optimizando el tiempo de llegada.
+
+# Actividad 5.2
+
+## Control en Lazo Abierto
+
+En el código a lazo abierto, todo es secuencial y ya está precalculado debido a que el algoritmo toma cada coordenada de la figura y calcula cuanto debe rotar el robot con `angulo_deseado = atan2(y_obj - y_calc, x_obj - x_calc);` y cuanta distancia debe recorrer en linea recta `distancia = sqrt((x_obj - x_calc)^2 + (y_obj - y_calc)^2);`. Este genera dos vectores `u` y `w` que representan velocidades lineares y angulares que se ejecutan en el tiempo. 
+
+La ventaja que tiene enfoque es que en simulación, los trazos de la figura son perfectos ya que al tener condiciones ideales, no hay nada que distorcione la trayectoria del robot. De igual forma este enfoque es muy simple ya que no requiere cálculos tan complejos en tiempo real ya que simplemente mide la distancia y el ángulo al que debe ir el robot con velocidades constantes. 
+
+La desventaja es que es un sistema que si se aplica en la vida real, la fricción de las llantas con el motor y el suelo provocan que tenga muchos errores en su trayectoria. Al tener una trayectoria tan compleja como una fugira, al acomularse el error, este al tercer punto aproximadamente distorcionará la figura y no saldrá como se tenía precalculado. 
+
+### Resultados
+
+<img width="1918" height="1037" alt="Screenshot from 2026-05-01 14-50-42" src="https://github.com/user-attachments/assets/abb6ca37-79bc-43f9-9f9d-60de9fe4a16f" />
+
+<img width="1918" height="1037" alt="Screenshot from 2026-05-01 14-56-43" src="https://github.com/user-attachments/assets/7bc96391-1d57-43f3-aa20-9fbdc6cf3cac" />
+
+
+## Control en Lazo Cerrado
+
+En el caso del código en lazo cerrado, el robot no tiene una secuencia establecida, al contrario, el robot conoce la coordenada objetivo definida como `(hxd, hyd)` y en cada instante de tiempo, sabe su posición actual, calucla el error de posición y ajusta sus velocidades usando la pseudoinversa de la matriz Jacobiana y tiene una matriz de ganancias para la velocidad linear y angular. 
+
+La ventaja de este algoritmo es que tiene suficiente robustez en la vida real. Independientemente si la pista es muy lisa o arrugada o si existe mucha o poca fricción del motor, el robot al conocer su posición actual en todo momento y ajustar su velocidad dependiendo de lo cercano o lejano que está del punto, siempre llegara al objetivo y su trayectoria será exacta debido a que las curvas y aproximaciones son suevas. 
+
+La desventaja es que requiere de una sintonización muy fina. En este caso al solo tener ganancia proporcional, si este aumenta mucho puede provocar oscilaciones y hacer que la figura no salga perfecta, y si es muy baja, puede que no llegue a los objetivos en el tiempo establecido. De igual forma, requeriría de otros tipos de control para hacer que la trayectoria sea lo más suave, sin embargo es más trabajao de sintonización para que adquiera las constantes ideales. De igual forma, este algoritmo tiene mayor costo computacional al requerir calcular inversas matriciales y funciones trigonométricas en cada ciclo. 
+
+<img width="1082" height="829" alt="Screenshot from 2026-04-29 18-58-08" src="https://github.com/user-attachments/assets/a5d44d35-e41b-4de2-a12f-6275134cab59" />
+
+<img width="1918" height="1037" alt="Screenshot from 2026-05-01 14-27-47" src="https://github.com/user-attachments/assets/1b04991a-7081-4522-847c-82fdde90e3c4" />
+
